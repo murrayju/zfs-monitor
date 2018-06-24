@@ -60,19 +60,19 @@ function spawn(
 }
 
 router.get('/', async (req, res) => {
-  const zpoolList = (await spawn('zpool', ['list'], null, false, true).promise).trim();
-  const zfsList = (await spawn('zfs', ['list'], null, false, true).promise).trim();
-  const status = (await spawn('zpool', ['status'], null, false, true).promise).trim();
+  const zpoolList = await spawn('zpool', ['list'], null, false, true).promise;
+  const zfsList = await spawn('zfs', ['list'], null, false, true).promise;
+  const status = await spawn('zpool', ['status'], null, false, true).promise;
   const driveInfo = `SMART Status:\n${(await Promise.all((await getDrives()).map(async d => {
     const smart = JSON.parse(await spawn('smartctl', ['-j', '-i', '-A', '-H', d.device], null, false, true).promise);
     return `  ${d.device}: overall health ${smart.smart_status.passed ? 'PASSED' : 'FAILED'}
-    ${smart.model_family}
+    family: ${smart.model_family}
     model:  ${smart.model_name}
     serial: ${smart.serial_number}
-    temp:   ${smart.temperature && smart.temperature.current || 'unknown '}℃`;
+    temp:   ${smart.temperature && `${smart.temperature.current}℃` || 'unknown'}`;
   }))).join('\n\n')}`;
   res.set('Content-Type', 'text/plain');
-  res.send([zpoolList, status, zfsList, driveInfo].join('\n\n\n'));
+  res.send([zpoolList, status, zfsList, driveInfo].join('\n\n'));
 });
 
 app.use(router);
