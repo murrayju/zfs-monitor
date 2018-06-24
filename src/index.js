@@ -67,7 +67,7 @@ router.get('/', async (req, res) => {
     ${smart.model_family}
     model:  ${smart.model_name}
     serial: ${smart.serial_number}
-    temp:   ${smart.temperature.current}℃`;
+    temp:   ${smart.temperature && smart.temperature.current || 'unknown '}℃`;
   }))).join('\n\n')}`;
   res.set('Content-Type', 'text/plain');
   res.send([status, driveInfo].join('\n\n\n'));
