@@ -5,7 +5,7 @@ RUN  dnf install -y http://download.zfsonlinux.org/epel/zfs-release.el7_5.noarch
   && dnf install -y \
       gpg \
       kernel-devel \
-	  zfs \
+      zfs \
   && dnf clean all --enablerepo=\*
 
 RUN groupadd --gid 1000 node \
@@ -67,13 +67,19 @@ RUN set -ex \
   && ln -s /opt/yarn-v$YARN_VERSION/bin/yarnpkg /usr/local/bin/yarnpkg \
   && rm yarn-v$YARN_VERSION.tar.gz.asc yarn-v$YARN_VERSION.tar.gz
 
+# Bleeding edge smartmontools with json output support
+ENV SMARTMON_VERSION 6.7-0-20180621-r4735
+RUN curl -fsSLO --compressed "https://builds.smartmontools.org/r4735/smartmontools-${SMARTMON_VERSION}.linux-x86_64.tar.gz" \
+  && tar -xzf smartmontools-${SMARTMON_VERSION}.linux-x86_64.tar.gz -C / \
+  && rm smartmontools-${SMARTMON_VERSION}.linux-x86_64.tar.gz
+
 # Directory to run the build in
 ENV buildDir /opt/build/
 RUN mkdir -p ${buildDir}
 WORKDIR ${buildDir}
 
-COPY ["package.json", "${buildDir}"]
+COPY ["package.json", "yarn.lock", "${buildDir}"]
 RUN yarn
-COPY ["index.js", "${buildDir}"]
+COPY ["src/", "${buildDir}/src/"]
 
-CMD [ "node", "index.js" ]
+CMD [ "node", "src/index.js" ]

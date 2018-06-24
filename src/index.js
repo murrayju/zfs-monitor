@@ -1,7 +1,11 @@
 const express = require('express');
+const Router = require('express-promise-router');
 const cp = require('child_process');
 
+const { getDrives } = require('./drives');
+
 const app = express();
+const router = Router();
 
 function spawn(
   command,
@@ -55,10 +59,19 @@ function spawn(
   };
 }
 
-app.get('/', async (req, res) => {
-  const status = await (spawn('zpool', ['status'], null, false, true).promise);
+router.get('/', async (req, res) => {
+  const status = (await spawn('zpool', ['status'], null, false, true).promise).trim();
+  const driveInfo = `SMART Status:\n${(await Promise.all((await getDrives()).map(async d => {
+    const smart = JSON.parse(await spawn('smartctl', ['-j', '-i', '-A', '-H', d.device], null, false, true).promise);
+    return `${d.device}: overall health ${smart.smart_status.passed ? 'PASSED' : 'FAILED'}
+    ${smart.model_family}
+    model:  ${smart.model_name}
+    serial: ${smart.serial_number}
+    temp:   ${smart.temperature.current}℃`;
+  }))).join('\n\n')}`;
   res.set('Content-Type', 'text/plain');
-  res.send(status);
+  res.send([status, driveInfo].join('\n\n\n'));
 });
 
+app.use(router);
 app.listen(80);
