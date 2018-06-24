@@ -80,6 +80,7 @@ WORKDIR ${buildDir}
 
 COPY ["package.json", "yarn.lock", "${buildDir}"]
 RUN yarn
+COPY ["zscripts/", "/etc/zfs/zpool.d/"]
 COPY ["src/", "${buildDir}/src/"]
 
 CMD [ "node", "src/index.js" ]
